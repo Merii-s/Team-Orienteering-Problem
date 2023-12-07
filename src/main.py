@@ -37,7 +37,7 @@ def main():
     distances = pdist(coords[['x', 'y']], metric='euclidean')
 
     # Compute time matrix
-    v = 1
+    v = 10
     time = distances / v
 
     # Create a square time matrix
@@ -51,6 +51,18 @@ def main():
     alpha = ut.alpha(coords)
     top_savings = ut.top_savings(coords, savings, alpha, n)
 
+    print("tmax = ", tmax)
+    solution = ut.init_solution(time_matrix, coords, n, tmax)
+    print("solution :\n", solution)
+
+    sorted_solution = ut.sortRoutesByProfit(solution)
+    print("sorted_solution :\n", sorted_solution)
+
+    final_solution = ut.deleteRoutesByProfit(sorted_solution, m)
+    print("final_solution :\n", final_solution)
+
+    merged_solution = ut.mergeRoutes(final_solution, 28, 35)
+    print("Merged Solution:\n",merged_solution)
     
 
 

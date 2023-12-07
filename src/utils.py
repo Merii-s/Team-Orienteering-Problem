@@ -80,15 +80,18 @@ def top_savings(coords, savings, alpha, n):
 
 
  
-def init_solution(time, coords, n):
+def init_solution(time, coords, n, tmax):
     # create a data frame composed by the route of each vehicle , its total travel time and its profit
     sol = pd.DataFrame(columns=['route', 'travel_time', 'profit'])
     # initialize every routes with only one client
-    for i in range(1, n):
+    for i in range(1, n-1):
         sol.loc[i] = [[i], time[0, i] + time[i, n-1], coords['s'][i]]
+
+    # Remove routes with travel_time > tmax
+    sol = sol[sol['travel_time'] <= tmax]
+
     return sol
 
-    
 def selectNextArc(sorted_savings_list):
     # TODO : return the next arc with i and j
     return NotImplemented
@@ -102,8 +105,27 @@ def jRoute(solution, j):
     return NotImplemented
 
 def mergeRoutes(solution, iRoute, jRoute):
-    # TODO : merge the routes of i and j
-    return NotImplemented
+    route_i = solution.loc[iRoute]['route']
+    route_j = solution.loc[jRoute]['route']
+    
+    # Merge the routes by concatenating the client lists of iRoute and jRoute
+    new_route = route_i + route_j[1:-1]  # Combine without considering the depot
+    
+    # Update the solution DataFrame with the newly merged route
+    solution.at[iRoute, 'route'] = new_route
+    
+    # Recalculate travel time for the merged route (assuming time is a column in the DataFrame)
+    travel_time = calcRouteTravelTime(solution, new_route) 
+    solution.at[iRoute, 'travel_time'] = travel_time
+    
+    # Sum the profits of the merged routes and update the solution DataFrame
+    total_profit = solution.loc[iRoute]['profit'] + solution.loc[jRoute]['profit']
+    solution.at[iRoute, 'profit'] = total_profit
+    
+    # Drop the jRoute as it's been merged into iRoute
+    solution = solution.drop(jRoute)
+    
+    return solution
 
 def calcRouteTravelTime(solution, route):
     # TODO : calculate the travel time of the route
@@ -122,9 +144,14 @@ def deleteEdgeFromSavingList(arc):
     return NotImplemented
 
 def sortRoutesByProfit(solution):
-    # TODO : sort the routes by profit
-    return NotImplemented
+    sorted_solution = solution.sort_values(by='profit', ascending=False)
+    return sorted_solution
 
 def deleteRoutesByProfit(sol, maxVehicles):
-    # TODO : delete the routes that are not profitable
-    return NotImplemented
+    # Sort routes by profit
+    sol = sol.sort_values(by='profit', ascending=False)
+    
+    # Keep only the top 'maxVehicles' profitable routes
+    sol = sol.head(maxVehicles)
+    
+    return sol
