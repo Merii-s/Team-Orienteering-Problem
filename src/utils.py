@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 def test_temp():
     Chao_directory = "TestInstances\Chao"
@@ -57,3 +58,69 @@ def read_problem_instance(file_path):
     return n,m,tmax,df
 
 
+def alpha(coords):
+    scores = coords['s']
+    # Taux d'évolution alpha déterminant l'homogénéité des scores de chacun des clients
+    return scores.mean() - scores.std() / scores.mean()
+
+def vrp_savings(time, n):
+    savings = np.zeros((n, n))
+    for i in range(n):
+        for j in range(n):
+            savings[i, j] = time[i,n-1] + time[0,j] - time[i, j]
+    return savings
+
+def top_savings(coords, savings, alpha, n):
+    new_savings = np.zeros((n, n))
+    for i in range(n):
+        for j in range(n):
+            new_savings[i, j] = alpha * savings[i, j] + (1 - alpha) * (coords['s'][i] + coords['s'][j])
+        
+    return new_savings
+
+
+
+def init_solution():
+    # TODO
+    return NotImplemented
+
+
+def selectNextArc(sorted_savings_list):
+    # TODO : return the next arc with i and j
+    return NotImplemented
+
+def iRoute(solution, i):
+    # TODO : return the route of the ith client
+    return NotImplemented
+
+def jRoute(solution, j):
+    # TODO : return the route of the jth client
+    return NotImplemented
+
+def mergeRoutes(solution, iRoute, jRoute):
+    # TODO : merge the routes of i and j
+    return NotImplemented
+
+def calcRouteTravelTime(solution, route):
+    # TODO : calculate the travel time of the route
+    return NotImplemented
+
+def validateMergeDrivingConstraints(travelTime, tmax):
+    # TODO : check if the merge of i and j is valid
+    return NotImplemented
+
+def updateSolution(newRoute, iRoute, jRoute, sol):
+    # TODO : update the solution after merging i and j
+    return NotImplemented
+
+def deleteEdgeFromSavingList(arc):
+    # TODO : delete the edge (i,j) from the sorted saving list
+    return NotImplemented
+
+def sortRoutesByProfit(solution):
+    # TODO : sort the routes by profit
+    return NotImplemented
+
+def deleteRoutesByProfit(sol, maxVehicles):
+    # TODO : delete the routes that are not profitable
+    return NotImplemented

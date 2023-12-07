@@ -11,8 +11,7 @@ class TestInstance:
     n: int  # number of clients + 2 (depot and end)
     m: int  # number of vehicules
     tmax: float  # available time budget per path
-    x_coordinates: List[float]  # x coordinates
-    y_coordinates: List[float]  # y coordinates
+    customers: List[float]  # customers (x,y) coordinates
     scores: List[int]  # scores
     
     def __repr__(self) -> str:
