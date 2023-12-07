@@ -79,12 +79,16 @@ def top_savings(coords, savings, alpha, n):
     return new_savings
 
 
+ 
+def init_solution(time, coords, n):
+    # create a data frame composed by the route of each vehicle , its total travel time and its profit
+    sol = pd.DataFrame(columns=['route', 'travel_time', 'profit'])
+    # initialize every routes with only one client
+    for i in range(1, n):
+        sol.loc[i] = [[i], time[0, i] + time[i, n-1], coords['s'][i]]
+    return sol
 
-def init_solution():
-    # TODO
-    return NotImplemented
-
-
+    
 def selectNextArc(sorted_savings_list):
     # TODO : return the next arc with i and j
     return NotImplemented
