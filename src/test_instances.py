@@ -3,6 +3,7 @@ from glob import glob
 from dataclasses import dataclass
 from typing import List
 import matplotlib.pyplot as plt
+import pandas as pd
 
 @dataclass
 class TestInstance:
