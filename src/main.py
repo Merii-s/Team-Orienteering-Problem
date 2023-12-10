@@ -36,10 +36,13 @@ def exec(path):
     init_solution, banned_routes = ut.init_solution(time_matrix, coords, n, tmax)
     sorted_top_savings_list = ut.top_savings(coords, savings, alpha, n, banned_routes)
 
-    solution = cw.clarke_wright(init_solution, sorted_top_savings_list, tmax, time_matrix, n, m)
-    profit = solution['profit'].sum()
+    solution_cw = cw.clarke_wright(init_solution, sorted_top_savings_list, tmax, time_matrix, n, m)
+    solution_2_opt = cw.clarke_wright_2_opt(init_solution, sorted_top_savings_list, tmax, time_matrix, n, m)
+
+    profit_cw = solution_cw['profit'].sum()
+    profit_2_opt = solution_2_opt['profit'].sum()
     
-    return profit
+    return profit_cw, profit_2_opt
 
 
 def process_files(input_folder, output_csv):
@@ -52,10 +55,10 @@ def process_files(input_folder, output_csv):
         file_path = os.path.join(input_folder, file_name)
 
         # Process the file (replace this with your actual processing logic)
-        result = exec(file_path)
+        profit_cw, profit_2_opt = exec(file_path)
 
         # Append the result to the list
-        results.append({'File': file_name, 'Result': result})
+        results.append({'Instance': file_name, 'Profit-Clarke-Wright': profit_cw,'Profit-Clarke-Wright-2-opt': profit_2_opt})
 
     # Write the results to a CSV file
     write_to_csv(results, output_csv)
@@ -63,8 +66,8 @@ def process_files(input_folder, output_csv):
 
 def write_to_csv(results, output_csv):
     # Write the results to a CSV file
-    with open(output_csv, 'w', newline='') as csv_file:
-        fieldnames = ['File', 'Result']
+    with open(output_csv, 'a', newline='') as csv_file:
+        fieldnames = ['Instance', 'Profit-Clarke-Wright', 'Profit-Clarke-Wright-2-opt']
         writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
 
         # Write the header
