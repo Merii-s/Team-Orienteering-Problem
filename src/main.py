@@ -62,13 +62,14 @@ def process_files(input_folder, output_csv):
 
 
 def write_to_csv(results, output_csv):
-    # Write the results to a CSV file
-    with open(output_csv, 'w', newline='') as csv_file:
+    # Write the results to a CSV file in append mode
+    with open(output_csv, 'a', newline='') as csv_file:  # Use 'a' for append mode
         fieldnames = ['File', 'Result']
         writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
 
-        # Write the header
-        writer.writeheader()
+        # Check if the file is empty, if so, write the header
+        if csv_file.tell() == 0:
+            writer.writeheader()
 
         # Write the data
         for row in results:
@@ -83,4 +84,5 @@ if __name__ == "__main__":
     # Process files and write results to CSV
     for path in instances_path:
         process_files(path, output_csv_path)
+
     
