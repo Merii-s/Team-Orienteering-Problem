@@ -61,70 +61,143 @@ def read_problem_instance(file_path):
 def alpha(coords):
     scores = coords['s']
     # Taux d'évolution alpha déterminant l'homogénéité des scores de chacun des clients
-    return scores.mean() - scores.std() / scores.mean()
+    return ( scores.mean() - scores.std() ) / scores.mean()
 
+# Returns the VRP savings matrix
 def vrp_savings(time, n):
     savings = np.zeros((n, n))
     for i in range(n):
         for j in range(n):
-            savings[i, j] = time[i,n-1] + time[0,j] - time[i, j]
+            if i != j :
+                savings[i, j] = time[i,n-1] + time[0,j] - time[i, j]
     return savings
 
-def top_savings(coords, savings, alpha, n):
-    new_savings = np.zeros((n, n))
+# Returns the TOP sorted list where each element is a tuple (saving, i, j) 
+# i and j are the indices of the clients corresponding to the compium of the saving from i to j 
+def top_savings(coords, savings, alpha, n, banned_routes):
+    new_savings = np.zeros((n, n, 3))
+    visited_pairs = set()  # Keep track of visited pairs to avoid duplication
+
     for i in range(n):
         for j in range(n):
-            new_savings[i, j] = alpha * savings[i, j] + (1 - alpha) * (coords['s'][i] + coords['s'][j])
-        
-    return new_savings
+            if i != j and ((i, j) not in visited_pairs or (j, i) not in visited_pairs) and i not in banned_routes and j not in banned_routes:
+                new_savings[i, j, 0] = alpha * savings[i, j] + (1 - alpha) * (coords['s'][i] + coords['s'][j])
+                new_savings[i, j, 1] = i  # i element
+                new_savings[i, j, 2] = j  # j element
+                visited_pairs.add((i, j))  # Mark the pair as visited
+                visited_pairs.add((j, i))  # Mark the reverse pair as visited
+    
+    # Flatten the 3D array into a list of tuples
+    list_of_tuples = [tuple(row) for row in new_savings.reshape((-1, 3)) if not all(elem == 0 for elem in row) and row[2] != 0 and row[1] != n-1 and row[1] != 0 and row[2] != n-1]
 
+    # Sort the list based on the saving values (element 0 of each tuple)
+    sorted_top_savings_list = sorted(list_of_tuples, key=lambda x: x[0], reverse=True)
+
+    return sorted_top_savings_list
 
  
-def init_solution(time, coords, n):
+def init_solution(time, coords, n, tmax):
     # create a data frame composed by the route of each vehicle , its total travel time and its profit
     sol = pd.DataFrame(columns=['route', 'travel_time', 'profit'])
     # initialize every routes with only one client
-    for i in range(1, n):
-        sol.loc[i] = [[i], time[0, i] + time[i, n-1], coords['s'][i]]
-    return sol
+    for i in range(1, n-1):
+        sol.loc[i] = [[i], time[0, i] + time[i, n-1], int(coords['s'][i])]
 
-    
+    # Remove routes with travel_time > tmax
+    banned_routes = []
+    for index, row in sol.iterrows():
+        if row['travel_time'] > tmax:
+            sol = sol.drop(index)
+            banned_routes.append(index)
+
+    return sol, banned_routes
+
 def selectNextArc(sorted_savings_list):
-    # TODO : return the next arc with i and j
-    return NotImplemented
+    return sorted_savings_list[0]
 
-def iRoute(solution, i):
-    # TODO : return the route of the ith client
-    return NotImplemented
+def GetiRoute(solution, i):
+    for index, row in solution.iterrows():
+        if i in row['route']:
+            return index, row['route']
 
-def jRoute(solution, j):
-    # TODO : return the route of the jth client
-    return NotImplemented
+def GetjRoute(solution, j):
+    for index, row in solution.iterrows():
+        if j in row['route']:
+            return index, row['route']
 
-def mergeRoutes(solution, iRoute, jRoute):
-    # TODO : merge the routes of i and j
-    return NotImplemented
+def mergeRoutes(iRoute, jRoute, i, j, n):
+    # Merge the routes by concatenating the client lists of iRoute and jRoute if these are terminal points
+    if iRoute[-1] == i or jRoute[0] == j:
+        return iRoute + jRoute  # Combine without considering the depot 
+    return []  # Return an empty list if the conditions are not met
 
-def calcRouteTravelTime(solution, route):
-    # TODO : calculate the travel time of the route
-    return NotImplemented
+def calcRouteTravelTime(solution, iIndex, jIndex, time_matrix, n):
+    return solution.loc[iIndex]['travel_time'] + solution.loc[jIndex]['travel_time'] + time_matrix[iIndex, jIndex] - time_matrix[0, jIndex] - time_matrix[iIndex, n-1]
+        
+
 
 def validateMergeDrivingConstraints(travelTime, tmax):
-    # TODO : check if the merge of i and j is valid
-    return NotImplemented
+    return travelTime <= tmax
 
-def updateSolution(newRoute, iRoute, jRoute, sol):
-    # TODO : update the solution after merging i and j
-    return NotImplemented
+def updateSolution(solution, newRoute, iIndex, jIndex, jRoute, travelTime):
+     # Update the solution DataFrame with the newly merged route
+    solution.at[iIndex, 'route'] = newRoute
+    
+    # Recalculate travel time for the merged route (assuming time is a column in the DataFrame)
+    solution.at[iIndex, 'travel_time'] = travelTime
+    
+    # Sum the profits of the merged routes and update the solution DataFrame
+    test1 = solution.loc[iIndex]['profit']
+    test2 = solution.loc[jIndex]['profit']
+
+    total_profit = solution.loc[iIndex]['profit'] + solution.loc[jIndex]['profit']
+    solution.at[iIndex, 'profit'] = total_profit
+    
+    # Drop the jRoute as it's been merged into iRoute
+    solution = solution.drop(jRoute)
 
 def deleteEdgeFromSavingList(arc):
-    # TODO : delete the edge (i,j) from the sorted saving list
-    return NotImplemented
+    arc.pop(0)
 
 def sortRoutesByProfit(solution):
-    # TODO : sort the routes by profit
-    return NotImplemented
+    return solution.sort_values(by='profit', ascending=False)
 
 def deleteRoutesByProfit(sol, maxVehicles):
-    # TODO : delete the routes that are not profitable
-    return NotImplemented
+    # Sort routes by profit
+    sol = sol.sort_values(by='profit', ascending=False)
+    
+    # Keep only the top 'maxVehicles' profitable routes
+    sol = sol.head(maxVehicles)
+    
+    return sol
+
+def two_opt(route, time_matrix, n):
+    best = route.copy()  # Make a copy of the original route
+    improved = True
+
+    while improved:
+        improved = False
+
+        for i in range(1, n-2):
+            for j in range(i+1, n-1):
+                if j-i == 1:
+                    continue  # Changes nothing, skip then
+
+                new_route = route[:i] + route[i:j][::-1] + route[j:]
+
+                new_route_travel_time = calculate_route_travel_time(new_route, time_matrix)
+
+                route_travel_time = calculate_route_travel_time(route, time_matrix)
+
+                if new_route_travel_time < route_travel_time:
+                    best = new_route[:]
+                    improved = True
+
+        route = best[:]
+
+    return best
+
+def calculate_route_travel_time(route, time_matrix):
+    travel_time = time_matrix[0, route[0]] + time_matrix[route[-1], len(route) - 1]
+    travel_time += sum([time_matrix[route[k], route[k + 1]] for k in range(len(route) - 1)])
+    return travel_time
