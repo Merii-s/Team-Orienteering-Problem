@@ -6,38 +6,21 @@ from glob import glob  # Pour rechercher des fichiers
 import random
 import utils as ut
 from scipy.spatial.distance import pdist, squareform
+import clarke_and_wright as cw
+import os
+import csv
 
 
-def main():
-    # Chao_directory = "TestInstances\Chao"
-    # Tsiligirides_directory = "TestInstances\Tsiligirides"
-
-    # # Appel de la fonction pour lire le fichier et stocker les données dans un DataFrame
-    # nom_fichier = Chao_directory + "\Set_64_234\p6.2.a.txt" 
-    # print(nom_fichier)
-    # resultat = ut.read_instances(nom_fichier)
-
-    # if resultat is not None:
-    #     print(resultat.head())  # Affichage des premières lignes du DataFrame pour vérifier
-
-    n,m,tmax,coords = ut.read_problem_instance("TestInstances/Chao/Set_64_234/p6.2.a.txt")
+def exec(path):
+    n,m,tmax,coords = ut.read_problem_instance(path)
     start = coords.iloc[0]
     end = coords.iloc[-1]
-    # print(n)
-    # print(m)
-    # print(tmax)
-    # print(coords)
-    print(start)
-    print(end)
-    # print(coords['x'])
-    # print(coords['y'])
-    # print(coords['s'])
 
     # Compute pairwise Euclidean distances
     distances = pdist(coords[['x', 'y']], metric='euclidean')
 
     # Compute time matrix
-    v = 10
+    v = 1
     time = distances / v
 
     # Create a square time matrix
@@ -49,22 +32,55 @@ def main():
 
     # Compute Clarke and Wright Savings
     alpha = ut.alpha(coords)
-    top_savings = ut.top_savings(coords, savings, alpha, n)
 
-    print("tmax = ", tmax)
-    solution = ut.init_solution(time_matrix, coords, n, tmax)
-    print("solution :\n", solution)
+    init_solution, banned_routes = ut.init_solution(time_matrix, coords, n, tmax)
+    sorted_top_savings_list = ut.top_savings(coords, savings, alpha, n, banned_routes)
 
-    sorted_solution = ut.sortRoutesByProfit(solution)
-    print("sorted_solution :\n", sorted_solution)
-
-    final_solution = ut.deleteRoutesByProfit(sorted_solution, m)
-    print("final_solution :\n", final_solution)
-
-    merged_solution = ut.mergeRoutes(final_solution, 28, 35)
-    print("Merged Solution:\n",merged_solution)
+    solution = cw.clarke_wright(init_solution, sorted_top_savings_list, tmax, time_matrix, n, m)
+    profit = solution['profit'].sum()
     
+    return profit
+
+
+def process_files(input_folder, output_csv):
+    # Get a list of all files in the input folder
+    files = [f for f in os.listdir(input_folder) if os.path.isfile(os.path.join(input_folder, f))]
+
+    # Process each file and collect results
+    results = []
+    for file_name in files:
+        file_path = os.path.join(input_folder, file_name)
+
+        # Process the file (replace this with your actual processing logic)
+        result = exec(file_path)
+
+        # Append the result to the list
+        results.append({'File': file_name, 'Result': result})
+
+    # Write the results to a CSV file
+    write_to_csv(results, output_csv)
+
+
+def write_to_csv(results, output_csv):
+    # Write the results to a CSV file
+    with open(output_csv, 'w', newline='') as csv_file:
+        fieldnames = ['File', 'Result']
+        writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+
+        # Write the header
+        writer.writeheader()
+
+        # Write the data
+        for row in results:
+            writer.writerow(row)
 
 
 if __name__ == "__main__":
-    main()
+# Specify the input folder and output CSV file
+    instances_path = ["TestInstances/Chao/Set_64_234", "TestInstances/Chao/Set_66_234", "TestInstances/Chao/Set_100_234", "TestInstances/Chao/Set_102_234", "TestInstances/Tsiligirides/Set_21_234", "TestInstances/Tsiligirides/Set_32_234", "TestInstances/Tsiligirides/Set_33_234"]
+    output_csv_path = "output_results.csv"  # Replace with your desired output CSV file path
+
+    # Process files and write results to CSV
+    for path in instances_path:
+        process_files(path, output_csv_path)
+    
