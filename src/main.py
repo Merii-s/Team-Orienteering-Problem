@@ -75,14 +75,11 @@ def write_to_csv(results, output_csv):
         for row in results:
             writer.writerow(row)
 
-
 if __name__ == "__main__":
 # Specify the input folder and output CSV file
     instances_path = ["TestInstances/Chao/Set_64_234", "TestInstances/Chao/Set_66_234", "TestInstances/Chao/Set_100_234", "TestInstances/Chao/Set_102_234", "TestInstances/Tsiligirides/Set_21_234", "TestInstances/Tsiligirides/Set_32_234", "TestInstances/Tsiligirides/Set_33_234"]
-    output_csv_path = "output_results.csv"  # Replace with your desired output CSV file path
+    output_csv_path = "output_results_or-opt.csv"  # Replace with your desired output CSV file path
 
     # Process files and write results to CSV
     for path in instances_path:
         process_files(path, output_csv_path)
-
-    

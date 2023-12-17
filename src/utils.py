@@ -197,6 +197,39 @@ def two_opt(route, time_matrix, n):
 
     return best
 
+def or_opt(route, time_matrix, n):
+    best = route.copy()  # Make a copy of the original route
+    improved = True
+
+    while improved:
+        improved = False
+
+        for i in range(1, n-2):
+            for j in range(i+2, n):
+                if j >= len(route):
+                    continue  # Skip if j is out of bounds
+
+                for k in range(n):
+                    if k != i and k != j:
+                        new_route = (
+                            route[:i] +
+                            [route[j]] +
+                            route[i+1:j] +
+                            [route[i]] +
+                            route[j+1:]
+                        )
+
+                        new_route_travel_time = calculate_route_travel_time(new_route, time_matrix)
+                        route_travel_time = calculate_route_travel_time(route, time_matrix)
+
+                        if new_route_travel_time < route_travel_time:
+                            best = new_route[:]
+                            improved = True
+
+        route = best[:]
+
+    return best
+
 def calculate_route_travel_time(route, time_matrix):
     travel_time = time_matrix[0, route[0]] + time_matrix[route[-1], len(route) - 1]
     travel_time += sum([time_matrix[route[k], route[k + 1]] for k in range(len(route) - 1)])
