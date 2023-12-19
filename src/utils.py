@@ -213,9 +213,9 @@ def or_opt(route, time_matrix, n):
                     if k != i and k != j:
                         new_route = (
                             route[:i] +
-                            [route[j]] +
                             route[i+1:j] +
                             [route[i]] +
+                            [route[j]] +
                             route[j+1:]
                         )
 
