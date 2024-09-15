@@ -4,7 +4,7 @@
 
 The Team Orienteering Problem (TOP) is a combinatorial optimization problem that involves planning routes for a team of agents to maximize the total score collected from various locations while adhering to constraints such as time limits. The problem is characterized by its need to balance the selection of locations with the associated travel costs, making it relevant in fields such as logistics, transportation, and urban planning.
 
-![TOP Diagram](![image](https://github.com/user-attachments/assets/70757fef-e703-4312-b2ae-5e575f18507c)
+![TOP Diagram](TOP-diagram.png)
 )  
 
 ## Implementation
